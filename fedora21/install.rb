@@ -93,7 +93,7 @@
 
 # Download and extract contrail and thirdparty rpms
 def download_contrail_software
-    sh("wget -qO - https://github.com/rombie/opencontrail-packages/blob/master/fedora21/contrail-rpms.tar.xz?raw=true | tar Jx")
+    sh("wget -qO - https://github.com/rombie/opencontrail-packages/blob/master/fedora21/contrail.tar.xz?raw=true | tar Jx")
     sh("wget -qO - https://github.com/rombie/opencontrail-packages/blob/master/fedora21/thirdparty.tar.xz?raw=true | tar Jx")
 end
 

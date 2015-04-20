@@ -1,17 +1,14 @@
 #!/usr/bin/env ruby
 
-@install_pkg = "yum -y install"
-@uninstall_pkg = "yum -y remove"
-
 @branch = "3.0" # master
 @tag = "4100"
 @pkg_tag = "#{@branch}-#{@tag}"
 
 @common_packages = [
-    "sshpass",
     "createrepo",
     "docker",
     "git",
+    "sshpass",
     "strace",
     "tcpdump",
     "unzip",
@@ -98,4 +95,41 @@
 def download_contrail_software
     sh("wget -qO - https://github.com/rombie/opencontrail-packages/blob/master/fedora21/contrail-rpms.tar.xz?raw=true | tar Jx")
     sh("wget -qO - https://github.com/rombie/opencontrail-packages/blob/master/fedora21/thirdparty.tar.xz?raw=true | tar Jx")
+end
+
+# Install from /cs-shared/builder/cache/centoslinux70/juno
+def install_thirdparty_software_controller
+    sh("yum -y remove java-1.8.0-openjdk java-1.8.0-openjdk-headless")
+    sh("yum -y install #{@controller_thirdparty_packages.join(" ")}", true)
+end
+
+# Install contrail controller software
+def install_contrail_software_controller
+    sh("yum -y install #{@controller_contrail_packages.join(" ")}", true)
+
+    sh("rpm2cpio #{@ws}/contrail/controller/build/package-build/RPMS/noarch/contrail-openstack-database-#{@pkg_tag}.fc21.noarch.rpm | cpio -idmv")
+    sh("cp etc/rc.d/init.d/zookeeper /etc/rc.d/init.d/")
+    sh("rpm2cpio #{@ws}/contrail/controller/build/package-build/RPMS/noarch/contrail-openstack-config-#{@pkg_tag}.fc21.noarch.rpm | cpio -idmv")
+    sh("cp etc/rc.d/init.d/rabbitmq-server.initd.supervisord /etc/rc.d/init.d/")
+    sh("cp -a etc/contrail/supervisord_support_service_files/ /etc/contrail/")
+
+    sh("rpm2cpio #{@ws}/contrail/controller/build/package-build/RPMS/noarch/contrail-openstack-control-#{@pkg_tag}.fc21.noarch.rpm | cpio -idmv")
+    sh("cp -a etc/contrail/supervisord_support_service_files/ /etc/contrail/")
+    sh("cp -a etc/contrail/supervisord_control_files/ /etc/contrail/")
+    sh("cp etc/contrail/supervisord_config_files/* /etc/contrail/supervisord_config_files/")
+
+    # XXX Install missing service files.
+    sh("cp #{@ws}/contrail/controller/run/systemd/generator.late/*.service /run/systemd/generator.late/.")
+end
+
+# Install third-party software
+def install_thirdparty_software_compute
+    sh("yum -y install #{@compute_thirdparty_packages.join(" ")}", true)
+    sh("service docker restart")
+#   sh("docker pull ubuntu")
+end
+
+# Install contrail compute software
+def install_contrail_software_compute
+    sh("yum -y install #{@compute_contrail_packages.join(" ")}", true)
 end
